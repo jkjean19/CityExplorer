@@ -1,6 +1,33 @@
 # User's Yelp API key
 api_key = 'Replace with api key'
 
+def data_formatting(data, term):
+    import numpy as np
+    import pandas as pd
+    
+    address = []
+
+    # Convert the location from dict to a string
+    for i in range(len(data)):    
+        address.append(" ".join(data.iloc[i]['location']['display_address']))
+
+    data['location'] = address
+    data['category'] = pd.Series(np.zeros(100))
+    
+    # Extract the main location category out of dict object
+    if term == 'takeout':
+        for i in range(len(data[['categories']])):
+            data['category'].iloc[i] = 'food'
+    else:
+        for i in range(len(data[['categories']])):
+            data['category'].iloc[i] = data[['categories']].iloc[i][0][0]['alias']
+        
+    if 'price' in data.columns:
+        data = data.drop(columns=['alias', 'categories', 'display_phone', 'distance', 'id', 'is_closed', 'transactions', 'price'])
+    else:
+        data = data.drop(columns=['alias', 'categories', 'display_phone', 'distance', 'id', 'is_closed', 'transactions'])
+    
+    return data
 
 def get_yelped(api_key, term, location, total_offset):
     import pandas as pd
@@ -27,39 +54,27 @@ def get_yelped(api_key, term, location, total_offset):
             break
         
     data = pd.DataFrame.from_dict(data)
-    data = data.drop(columns=['alias', 'categories', 'display_phone', 'distance', 'id', 'is_closed', 'transactions'])
-    return data_formatting(data)
+    return data_formatting(data, term)
 
 
-def data_formatting(data):
-    address = []
-
-    for i in range(len(data)):    
-        # Converts business location from dict to a string
-        address.append(" ".join(data.iloc[i]['location']['display_address']))
-
-    data['location'] = address
-    return data
-
-
-def pd_to_psql(data, table_name):
+def pd_to_psql(data, city):
     from sqlalchemy import create_engine, types
 
     engine = create_engine('postgresql://postgres:password@localhost:5432/city_tour')
-    data.to_sql(table_name, engine, if_exists='replace', dtype = 
+    data.to_sql(city, engine, if_exists='replace', dtype = 
                 {'coordinates':types.JSON}) 
 
 
-def selector(db, table):
-    from random import randint
+def selector(db, city, category):
+    from random import sample
     from psycopg2 import connect
     
     conn = connect(host='localhost', database=db, user="postgres", password='password')
     cur = conn.cursor()
     
-    cur.execute('SELECT MAX(index) FROM {}'.format(table))
-    rowcount = cur.fetchone()[0]
-    selection = randint(0, rowcount+1)
-    cur.execute('SELECT name, location, phone FROM {} WHERE index = {}'.format(table, selection))
+    cur.execute("SELECT index FROM {} WHERE category = '{}';".format(city, category))
+    rows = cur.fetchall()[0]
+    selection = sample(rows, 1)[0]
+    cur.execute('SELECT name, location, phone FROM {} WHERE index = {};'.format(city, selection))
     
     return cur.fetchone()
