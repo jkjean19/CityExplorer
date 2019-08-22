@@ -78,3 +78,18 @@ def selector(db, city, category):
     cur.execute('SELECT name, location, phone FROM {} WHERE index = {};'.format(city, selection))
     
     return cur.fetchone()
+
+"""
+### Example:
+
+nyc = get_yelped(api_key, 'park', 'New York NY', 150)
+nyc = nyc.append(get_yelped(api_key, 'takeout', 'New York NY', 1000), ignore_index=True)
+nyc = nyc.append(get_yelped(api_key, 'sites', 'New York NY', 150), ignore_index=True)
+
+philly = get_yelped(api_key, 'park', 'Philadelphia PA', 150)
+philly = philly.append(get_yelped(api_key, 'takeout', 'Philadelphia PA', 1000), ignore_index=True)
+philly = philly.append(get_yelped(api_key, 'sites', 'Philadelphia PA', 150), ignore_index=True)
+
+pd_to_psql(nyc, 'new_york_city')
+pd_to_psql(philly, 'philadelphia')
+"""
