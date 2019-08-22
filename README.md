@@ -1,5 +1,5 @@
 # CityExplorer
-Tkinter GUI that offers suggestions of places to visit in the NYC area.
+Tkinter GUI that offers suggestions of places to visit in select cities.
 
 <p align="center">
   <b>Startup:</b><br>
